@@ -1,0 +1,59 @@
+:root {
+  --panel: #111613;
+  --panel-edge: #2b342f;
+  --dot-off: #263029;
+  --dot-on: #ffe66d;
+  --glow: rgba(255, 230, 109, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  background: #202428;
+  color: #f2f2f2;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.display-shell {
+  width: min(94vw, 960px);
+  padding: clamp(14px, 3vw, 28px);
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 60px rgba(0, 0, 0, 0.38);
+}
+
+.dot-matrix {
+  display: grid;
+  grid-template-columns: repeat(64, 1fr);
+  grid-template-rows: repeat(32, 1fr);
+  gap: clamp(2px, 0.42vw, 5px);
+  aspect-ratio: 2 / 1;
+  width: 100%;
+  padding: clamp(8px, 1.8vw, 18px);
+  border-radius: 6px;
+  background: #050806;
+}
+
+.dot {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--dot-off);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.dot.is-on {
+  background: var(--dot-on);
+  box-shadow:
+    0 0 8px var(--glow),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
