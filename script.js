@@ -2,13 +2,11 @@ const DISPLAY_WIDTH = 64;
 const DISPLAY_HEIGHT = 32;
 const ROW_HEIGHT = 8;
 const TEXT_HEIGHT = 7;
+const TFL_STOP_POINT_ID = "490012394W";
+const TFL_APP_KEY = "ad941341170745109559d8d9f62a5aa5";
+const TFL_POLL_INTERVAL_MS = 60 * 1000;
 
-const rows = [
-  "Hello World",
-  "Hello World",
-  "Hello World",
-  "Hello World",
-];
+const rows = ["Loading", "TfL bus", "arrivals", ""];
 
 const FONT_5X7 = {
   " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
@@ -38,6 +36,19 @@ const FONT_5X7 = {
   X: ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
   Y: ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
   Z: ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
+  "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
+  "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
+  "2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
+  "3": ["11110", "00001", "00001", "01110", "00001", "00001", "11110"],
+  "4": ["00010", "00110", "01010", "10010", "11111", "00010", "00010"],
+  "5": ["11111", "10000", "10000", "11110", "00001", "00001", "11110"],
+  "6": ["01110", "10000", "10000", "11110", "10001", "10001", "01110"],
+  "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
+  "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
+  "9": ["01110", "10001", "10001", "01111", "00001", "00001", "01110"],
+  ".": ["00000", "00000", "00000", "00000", "00000", "01100", "01100"],
+  ":": ["00000", "01100", "01100", "00000", "01100", "01100", "00000"],
+  "-": ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
 };
 
 function createDisplayBuffer() {
@@ -88,4 +99,55 @@ function renderDisplay() {
   }
 }
 
+function setRows(nextRows) {
+  rows.splice(0, rows.length, ...nextRows.slice(0, 4));
+
+  while (rows.length < 4) {
+    rows.push("");
+  }
+
+  renderDisplay();
+}
+
+function formatArrivalTime(secondsToArrival) {
+  const minutesToArrival = Math.max(0, Math.round(secondsToArrival / 60));
+
+  return minutesToArrival <= 1 ? "DUE" : `${minutesToArrival} MIN`;
+}
+
+function formatArrival(arrival) {
+  return `${arrival.lineName} ${formatArrivalTime(arrival.timeToStation)}`;
+}
+
+function getArrivalsUrl() {
+  const url = new URL(`https://api.tfl.gov.uk/StopPoint/${TFL_STOP_POINT_ID}/Arrivals`);
+  url.searchParams.set("app_key", TFL_APP_KEY);
+
+  return url;
+}
+
+async function updateArrivals() {
+  try {
+    const response = await fetch(getArrivalsUrl());
+
+    if (!response.ok) {
+      throw new Error(`TfL returned ${response.status}`);
+    }
+
+    const arrivals = await response.json();
+    const upcomingArrivals = arrivals
+      .filter((arrival) => Number.isFinite(arrival.timeToStation))
+      .sort((a, b) => a.timeToStation - b.timeToStation)
+      .slice(0, 4)
+      .map(formatArrival);
+
+    setRows(upcomingArrivals.length > 0 ? upcomingArrivals : ["No buses", "listed", "", ""]);
+  } catch (error) {
+    setRows(["TfL error", "Retrying", "in 1 min", ""]);
+    console.error(error);
+  }
+}
+
 renderDisplay();
+updateArrivals();
+setInterval(updateArrivals, TFL_POLL_INTERVAL_MS);
