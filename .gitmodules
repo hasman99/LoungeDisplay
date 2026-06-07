@@ -1,0 +1,3 @@
+[submodule "huxley2"]
+	path = huxley2
+	url = git@github.com:hasman99/Huxley2.git
