@@ -4,6 +4,7 @@ const ROW_HEIGHT = 8;
 const TEXT_HEIGHT = 7;
 const VISIBLE_ROW_COUNT = DISPLAY_HEIGHT / ROW_HEIGHT;
 const SECTION_ROW_COUNT = VISIBLE_ROW_COUNT / 2;
+const ICON_GAP = 2;
 const TFL_STOP_POINT_ID = "490012394W";
 const TFL_APP_KEY = "ad941341170745109559d8d9f62a5aa5";
 const TFL_POLL_INTERVAL_MS = 60 * 1000;
@@ -58,13 +59,53 @@ const FONT_5X7 = {
   "-": ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
 };
 
+const ROW_ICONS = {
+  bus: [
+    "0111110",
+    "1001001",
+    "1111111",
+    "1011101",
+    "1111111",
+    "0100010",
+    "0100010",
+  ],
+  train: [
+    "0011100",
+    "0111110",
+    "1011101",
+    "1011101",
+    "1111111",
+    "0100010",
+    "1000001",
+  ],
+};
+
 function createDisplayBuffer() {
   return Array.from({ length: DISPLAY_HEIGHT }, () => Array(DISPLAY_WIDTH).fill(false));
 }
 
-function drawText(buffer, text, rowIndex) {
+function drawBitmap(buffer, bitmap, rowIndex, xOffset) {
   const yOffset = rowIndex * ROW_HEIGHT;
-  let xOffset = 0;
+
+  for (let y = 0; y < bitmap.length; y += 1) {
+    for (let x = 0; x < bitmap[y].length; x += 1) {
+      const displayX = xOffset + x;
+      const displayY = yOffset + y;
+
+      if (
+        displayX < DISPLAY_WIDTH &&
+        displayY < DISPLAY_HEIGHT &&
+        bitmap[y][x] === "1"
+      ) {
+        buffer[displayY][displayX] = true;
+      }
+    }
+  }
+}
+
+function drawText(buffer, text, rowIndex, startX = 0) {
+  const yOffset = rowIndex * ROW_HEIGHT;
+  let xOffset = startX;
 
   for (const character of text.toUpperCase()) {
     const glyph = FONT_5X7[character] || FONT_5X7[" "];
@@ -93,7 +134,12 @@ function renderDisplay() {
   const matrix = document.getElementById("dot-matrix");
   const buffer = createDisplayBuffer();
 
-  rows.slice(0, VISIBLE_ROW_COUNT).forEach((text, rowIndex) => drawText(buffer, text, rowIndex));
+  rows.slice(0, VISIBLE_ROW_COUNT).forEach((text, rowIndex) => {
+    const icon = rowIndex < SECTION_ROW_COUNT ? ROW_ICONS.bus : ROW_ICONS.train;
+
+    drawBitmap(buffer, icon, rowIndex, 0);
+    drawText(buffer, text, rowIndex, icon[0].length + ICON_GAP);
+  });
 
   matrix.innerHTML = "";
 
