@@ -188,8 +188,32 @@ function formatArrivalTime(secondsToArrival) {
   return minutesToArrival <= 1 ? "DUE" : `${minutesToArrival} MIN`;
 }
 
+function abbreviateDestination(destinationName) {
+  const words = String(destinationName ?? "")
+    .replace(/[^a-z0-9 ]/gi, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length === 0) {
+    return "---";
+  }
+
+  if (words.length === 1) {
+    return words[0].slice(0, 3).toUpperCase();
+  }
+
+  return words
+    .slice(0, 3)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
 function formatArrival(arrival) {
-  return `${arrival.lineName} ${formatArrivalTime(arrival.timeToStation)}`;
+  const destination = abbreviateDestination(arrival.destinationName);
+
+  return `${destination} ${arrival.lineName} ${formatArrivalTime(arrival.timeToStation)}`;
 }
 
 function compactTrainTime(time) {
@@ -229,7 +253,7 @@ function formatDepartureEstimate(departure) {
 function formatDeparture(departure) {
   const scheduledDeparture = compactTrainTime(departure.std) || "--:--";
 
-  return `${scheduledDeparture} ${formatDepartureEstimate(departure)}`;
+  return `${HUXLEY_DESTINATION_CRS} ${scheduledDeparture} ${formatDepartureEstimate(departure)}`;
 }
 
 function isDepartureToDestination(departure) {
