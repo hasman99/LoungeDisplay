@@ -1,7 +1,9 @@
-const DISPLAY_WIDTH = 64;
-const DISPLAY_HEIGHT = 32;
+const DISPLAY_WIDTH = 128;
+const DISPLAY_HEIGHT = 64;
 const ROW_HEIGHT = 8;
 const TEXT_HEIGHT = 7;
+const VISIBLE_ROW_COUNT = DISPLAY_HEIGHT / ROW_HEIGHT;
+const SECTION_ROW_COUNT = VISIBLE_ROW_COUNT / 2;
 const TFL_STOP_POINT_ID = "490012394W";
 const TFL_APP_KEY = "ad941341170745109559d8d9f62a5aa5";
 const TFL_POLL_INTERVAL_MS = 60 * 1000;
@@ -91,7 +93,7 @@ function renderDisplay() {
   const matrix = document.getElementById("dot-matrix");
   const buffer = createDisplayBuffer();
 
-  rows.slice(0, 4).forEach((text, rowIndex) => drawText(buffer, text, rowIndex));
+  rows.slice(0, VISIBLE_ROW_COUNT).forEach((text, rowIndex) => drawText(buffer, text, rowIndex));
 
   matrix.innerHTML = "";
 
@@ -105,9 +107,9 @@ function renderDisplay() {
 }
 
 function setRows(nextRows) {
-  rows.splice(0, rows.length, ...nextRows.slice(0, 4));
+  rows.splice(0, rows.length, ...nextRows.slice(0, VISIBLE_ROW_COUNT));
 
-  while (rows.length < 4) {
+  while (rows.length < VISIBLE_ROW_COUNT) {
     rows.push("");
   }
 
@@ -115,9 +117,9 @@ function setRows(nextRows) {
 }
 
 function getSectionRows(nextRows) {
-  const sectionRows = nextRows.slice(0, 2);
+  const sectionRows = nextRows.slice(0, SECTION_ROW_COUNT);
 
-  while (sectionRows.length < 2) {
+  while (sectionRows.length < SECTION_ROW_COUNT) {
     sectionRows.push("");
   }
 
@@ -210,7 +212,7 @@ async function updateArrivals() {
     const upcomingArrivals = arrivals
       .filter((arrival) => Number.isFinite(arrival.timeToStation))
       .sort((a, b) => a.timeToStation - b.timeToStation)
-      .slice(0, 2)
+      .slice(0, SECTION_ROW_COUNT)
       .map(formatArrival);
 
     setBusRows(upcomingArrivals.length > 0 ? upcomingArrivals : ["No buses", "listed"]);
@@ -232,7 +234,7 @@ async function updateDepartures() {
     const upcomingDepartures = (departureBoard.trainServices || [])
       .filter((departure) => departure && departure.std)
       .filter(isDepartureToDestination)
-      .slice(0, 2)
+      .slice(0, SECTION_ROW_COUNT)
       .map(formatDeparture);
 
     setTrainRows(upcomingDepartures.length > 0 ? upcomingDepartures : ["No trains", "listed"]);

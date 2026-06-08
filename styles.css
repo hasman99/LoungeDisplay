@@ -33,9 +33,9 @@ body {
 
 .dot-matrix {
   display: grid;
-  grid-template-columns: repeat(64, 1fr);
-  grid-template-rows: repeat(32, 1fr);
-  gap: clamp(2px, 0.42vw, 5px);
+  grid-template-columns: repeat(128, 1fr);
+  grid-template-rows: repeat(64, 1fr);
+  gap: clamp(1px, 0.2vw, 3px);
   aspect-ratio: 2 / 1;
   width: 100%;
   padding: clamp(8px, 1.8vw, 18px);
