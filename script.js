@@ -5,8 +5,13 @@ const TEXT_HEIGHT = 7;
 const TFL_STOP_POINT_ID = "490012394W";
 const TFL_APP_KEY = "ad941341170745109559d8d9f62a5aa5";
 const TFL_POLL_INTERVAL_MS = 60 * 1000;
+const HUXLEY_DEPARTURES_URL = "http://localhost:8081/departures/NEM/to/WAT/10";
+const HUXLEY_DESTINATION_CRS = "WAT";
+const HUXLEY_POLL_INTERVAL_MS = 60 * 1000;
 
-const rows = ["Loading", "TfL bus", "arrivals", ""];
+let busRows = ["Loading", "buses"];
+let trainRows = ["Loading", "trains"];
+const rows = [...busRows, ...trainRows];
 
 const FONT_5X7 = {
   " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
@@ -109,6 +114,26 @@ function setRows(nextRows) {
   renderDisplay();
 }
 
+function getSectionRows(nextRows) {
+  const sectionRows = nextRows.slice(0, 2);
+
+  while (sectionRows.length < 2) {
+    sectionRows.push("");
+  }
+
+  return sectionRows;
+}
+
+function setBusRows(nextRows) {
+  busRows = getSectionRows(nextRows);
+  setRows([...busRows, ...trainRows]);
+}
+
+function setTrainRows(nextRows) {
+  trainRows = getSectionRows(nextRows);
+  setRows([...busRows, ...trainRows]);
+}
+
 function formatArrivalTime(secondsToArrival) {
   const minutesToArrival = Math.max(0, Math.round(secondsToArrival / 60));
 
@@ -117,6 +142,53 @@ function formatArrivalTime(secondsToArrival) {
 
 function formatArrival(arrival) {
   return `${arrival.lineName} ${formatArrivalTime(arrival.timeToStation)}`;
+}
+
+function compactTrainTime(time) {
+  return String(time ?? "")
+    .replace("*", "")
+    .replace(":", "")
+    .trim()
+    .toUpperCase();
+}
+
+function formatDepartureEstimate(departure) {
+  const estimatedDeparture = String(departure.etd ?? "").trim();
+  const normalizedEstimate = estimatedDeparture.toUpperCase();
+
+  if (
+    departure.isCancelled ||
+    departure.filterLocationCancelled ||
+    normalizedEstimate.includes("CANCEL")
+  ) {
+    return "CAN";
+  }
+
+  if (normalizedEstimate === "ON TIME") {
+    return "OT";
+  }
+
+  if (normalizedEstimate === "DELAYED") {
+    return "DLY";
+  }
+
+  if (normalizedEstimate === "NO REPORT") {
+    return "NR";
+  }
+
+  return compactTrainTime(estimatedDeparture) || "---";
+}
+
+function formatDeparture(departure) {
+  const scheduledDeparture = compactTrainTime(departure.std) || "----";
+
+  return `${scheduledDeparture} ${formatDepartureEstimate(departure)}`;
+}
+
+function isDepartureToDestination(departure) {
+  return (departure.destination || []).some(
+    (destination) => destination.crs === HUXLEY_DESTINATION_CRS,
+  );
 }
 
 function getArrivalsUrl() {
@@ -138,16 +210,40 @@ async function updateArrivals() {
     const upcomingArrivals = arrivals
       .filter((arrival) => Number.isFinite(arrival.timeToStation))
       .sort((a, b) => a.timeToStation - b.timeToStation)
-      .slice(0, 4)
+      .slice(0, 2)
       .map(formatArrival);
 
-    setRows(upcomingArrivals.length > 0 ? upcomingArrivals : ["No buses", "listed", "", ""]);
+    setBusRows(upcomingArrivals.length > 0 ? upcomingArrivals : ["No buses", "listed"]);
   } catch (error) {
-    setRows(["TfL error", "Retrying", "in 1 min", ""]);
+    setBusRows(["TfL error", "Retry 1m"]);
+    console.error(error);
+  }
+}
+
+async function updateDepartures() {
+  try {
+    const response = await fetch(HUXLEY_DEPARTURES_URL);
+
+    if (!response.ok) {
+      throw new Error(`Huxley returned ${response.status}`);
+    }
+
+    const departureBoard = await response.json();
+    const upcomingDepartures = (departureBoard.trainServices || [])
+      .filter((departure) => departure && departure.std)
+      .filter(isDepartureToDestination)
+      .slice(0, 2)
+      .map(formatDeparture);
+
+    setTrainRows(upcomingDepartures.length > 0 ? upcomingDepartures : ["No trains", "listed"]);
+  } catch (error) {
+    setTrainRows(["Rail error", "Retry 1m"]);
     console.error(error);
   }
 }
 
 renderDisplay();
 updateArrivals();
+updateDepartures();
 setInterval(updateArrivals, TFL_POLL_INTERVAL_MS);
+setInterval(updateDepartures, HUXLEY_POLL_INTERVAL_MS);
