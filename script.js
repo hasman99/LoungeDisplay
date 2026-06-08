@@ -149,7 +149,6 @@ function formatArrival(arrival) {
 function compactTrainTime(time) {
   return String(time ?? "")
     .replace("*", "")
-    .replace(":", "")
     .trim()
     .toUpperCase();
 }
@@ -163,26 +162,26 @@ function formatDepartureEstimate(departure) {
     departure.filterLocationCancelled ||
     normalizedEstimate.includes("CANCEL")
   ) {
-    return "CAN";
+    return "CANCELLED";
   }
 
   if (normalizedEstimate === "ON TIME") {
-    return "OT";
+    return "ON TIME";
   }
 
   if (normalizedEstimate === "DELAYED") {
-    return "DLY";
+    return "DELAYED";
   }
 
   if (normalizedEstimate === "NO REPORT") {
-    return "NR";
+    return "NO REPORT";
   }
 
   return compactTrainTime(estimatedDeparture) || "---";
 }
 
 function formatDeparture(departure) {
-  const scheduledDeparture = compactTrainTime(departure.std) || "----";
+  const scheduledDeparture = compactTrainTime(departure.std) || "--:--";
 
   return `${scheduledDeparture} ${formatDepartureEstimate(departure)}`;
 }
