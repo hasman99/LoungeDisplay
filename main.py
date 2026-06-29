@@ -1,14 +1,15 @@
 import os
 import sys
 import time
+from collections.abc import Sequence
 
 from rgbmatrix import FrameCanvas, RGBMatrix, RGBMatrixOptions, graphics
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-FONT_PATH = os.path.join(PROJECT_ROOT, "rgbmatrix", "fonts", "5x7.bdf")
+PROJECT_ROOT: str = os.path.abspath(os.path.dirname(__file__))
+FONT_PATH: str = os.path.join(PROJECT_ROOT, "rgbmatrix", "fonts", "5x8.bdf")
 
 
-LINES = [
+LINES: list[str] = [
     "Line 1",
     "Line 2",
     "Line 3",
@@ -18,7 +19,7 @@ LINES = [
 ]
 
 
-def create_matrix():
+def create_matrix() -> RGBMatrix:
     options = RGBMatrixOptions()
     options.hardware_mapping = "regular"
     options.rows = 48
@@ -48,7 +49,11 @@ def create_matrix():
     return RGBMatrix(options=options)
 
 
-def draw_lines(canvas: FrameCanvas, font, lines):
+def draw_lines(
+    canvas: FrameCanvas,
+    font: graphics.Font,
+    lines: Sequence[str],
+) -> None:
     canvas.Clear()
 
     text_color = graphics.Color(255, 255, 255)
@@ -60,7 +65,7 @@ def draw_lines(canvas: FrameCanvas, font, lines):
         baseline_y += line_spacing
 
 
-def main():
+def main() -> None:
     matrix = create_matrix()
 
     font = graphics.Font()
