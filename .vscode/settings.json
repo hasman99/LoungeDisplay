@@ -7,6 +7,6 @@
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "ruff.importStrategy": "fromEnvironment",
-  "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"]
-
+  "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+  "python.pyrefly.typeCheckingMode": "strict"
 }
