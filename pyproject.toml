@@ -9,8 +9,16 @@ dependencies = [
     "rgbmatrix",
 ]
 
+[tool.ruff]
+extend-exclude = ["rgbmatrix"]
+
 [tool.ruff.lint]
 extend-select = ["I"]
 
 [tool.uv.sources]
 rgbmatrix = { path = "./rgbmatrix" }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.20",
+]
